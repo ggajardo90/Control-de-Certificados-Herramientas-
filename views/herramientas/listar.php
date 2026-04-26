@@ -60,6 +60,10 @@ include "../layouts/sidebar.php";
                 Excel
             </a>
 
+            <a href="reporte_pdf.php" target="_blank" class="btn btn-danger btn-square">
+                PDF
+            </a>
+
         </div>
     </div>
 
@@ -222,18 +226,27 @@ include "../layouts/sidebar.php";
 
                                 <!-- ACCIONES -->
                                 <td>
-
                                     <a
                                         href="editar.php?id=<?php echo $fila["id"]; ?>"
-                                        class="btn btn-sm btn-warning text-dark">
-                                        Editar
+                                        class="btn btn-sm btn-warning"
+                                        title="Editar">
+                                        <i class="bi bi-pencil-square"></i>
                                     </a>
 
                                     <a
                                         href="eliminar.php?id=<?php echo $fila["id"]; ?>"
                                         class="btn btn-sm btn-danger"
+                                        title="Eliminar"
                                         onclick="return confirm('¿Deseas eliminar este registro?')">
-                                        Eliminar
+                                        <i class="bi bi-trash-fill"></i>
+                                    </a>
+
+                                    <a
+                                        href="etiqueta.php?id=<?php echo $fila['id']; ?>"
+                                        target="_blank"
+                                        class="btn btn-sm btn-dark"
+                                        title="Imprimir Etiqueta">
+                                        <i class="bi bi-printer-fill"></i>
                                     </a>
 
                                 </td>

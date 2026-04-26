@@ -10,15 +10,15 @@ Diseñado con enfoque empresarial, moderno, profesional y fácil de mantener.
 
 # 🚀 Tecnologías utilizadas
 
-* 🌐 HTML5
-* 🎨 CSS3
-* ⚡ JavaScript
-* 🅱 Bootstrap 5
-* 🐘 PHP
-* 🗄 MySQL
-* 📊 PhpSpreadsheet (Excel)
-* 🔐 PDO (Seguridad SQL Injection)
-* 🖥 Laragon
+- 🌐 HTML5
+- 🎨 CSS3
+- ⚡ JavaScript
+- 🅱 Bootstrap 5
+- 🐘 PHP
+- 🗄 MySQL
+- 📊 PhpSpreadsheet (Excel)
+- 🔐 PDO (Seguridad SQL Injection)
+- 🖥 Laragon
 
 ---
 
@@ -26,44 +26,44 @@ Diseñado con enfoque empresarial, moderno, profesional y fácil de mantener.
 
 ## 🔐 Login de usuarios
 
-* Inicio de sesión seguro
-* Protección de sesiones
-* Restricción de acceso
+- Inicio de sesión seguro
+- Protección de sesiones
+- Restricción de acceso
 
 ## 📋 Registro de herramientas
 
-* Nombre de herramienta
-* Número de serie
-* Número de inventario automático
-* Marca
-* Modelo
-* Fecha de certificación
-* Fecha de vencimiento
-* Estado automático
-* Número de certificado
-* Carga de certificado PDF
+- Nombre de herramienta
+- Número de serie
+- Número de inventario automático
+- Marca
+- Modelo
+- Fecha de certificación
+- Fecha de vencimiento
+- Estado automático
+- Número de certificado
+- Carga de certificado PDF
 
 ## 📊 Dashboard administrativo
 
-* Total de herramientas
-* Certificaciones vigentes
-* Próximas a vencer
-* Certificaciones vencidas
-* Alertas visuales por colores
+- Total de herramientas
+- Certificaciones vigentes
+- Próximas a vencer
+- Certificaciones vencidas
+- Alertas visuales por colores
 
 ## 🔍 Listado y control
 
-* Filtro por nombre
-* Número de serie
-* Número de inventario
-* Visualización de PDF
-* Edición y eliminación
-* Días restantes de vigencia
+- Filtro por nombre
+- Número de serie
+- Número de inventario
+- Visualización de PDF
+- Edición y eliminación
+- Días restantes de vigencia
 
 ## 📥 Exportación Excel
 
-* Reporte profesional en `.xlsx`
-* Ideal para auditorías y gerencia
+- Reporte profesional en `.xlsx`
+- Ideal para auditorías y gerencia
 
 ---
 
@@ -71,11 +71,11 @@ Diseñado con enfoque empresarial, moderno, profesional y fácil de mantener.
 
 Agregar imágenes de:
 
-* Login
-* Dashboard
-* Registro de herramientas
-* Listado
-* Exportación Excel
+- Login
+- Dashboard
+- Registro de herramientas
+- Listado
+- Exportación Excel
 
 ---
 
@@ -117,12 +117,12 @@ http://localhost/certificados_herramientas
 
 # 🔮 Próximas mejoras
 
-* 📄 Reportes PDF profesionales
-* 🔔 Alertas automáticas
-* 📧 Notificaciones por correo
-* 🕓 Historial de certificaciones
-* 👥 Gestión avanzada de usuarios
-* 🔐 Roles y permisos
+- 📄 Reportes PDF profesionales
+- 🔔 Alertas automáticas
+- 📧 Notificaciones por correo
+- 🕓 Historial de certificaciones
+- 👥 Gestión avanzada de usuarios
+- 🔐 Roles y permisos
 
 ---
 

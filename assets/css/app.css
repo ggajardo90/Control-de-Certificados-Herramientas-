@@ -299,3 +299,42 @@ body {
     border-radius: 12px;
     margin-bottom: 20px;
 }
+
+/* WRAPPER (CLAVE) */
+.wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 260px;
+    height: 100vh;
+    position: fixed;
+    background: #2f3a4a;
+    left: 0;
+    top: 0;
+    padding: 20px;
+}
+
+/* LINKS SIDEBAR */
+.sidebar a {
+    display: block;
+    color: #dbe4f0;
+    text-decoration: none;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
+.sidebar a:hover {
+    background: rgba(255,255,255,0.08);
+    color: white;
+}
+
+/* CONTENIDO */
+.content {
+    margin-left: 260px;
+    padding: 30px;
+    width: 100%;
+}

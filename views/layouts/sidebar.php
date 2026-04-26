@@ -2,20 +2,41 @@
 
     <h4>📦 Certificados</h4>
 
-    <a href="/certificados_herramientas/views/dashboard/index.php">
+    <!-- DASHBOARD -->
+    <a href="../dashboard/index.php">
         📊 Dashboard
     </a>
 
-    <a href="/certificados_herramientas/views/herramientas/registrar.php">
-        ➕ Registrar
+    <!-- HERRAMIENTAS -->
+    <a href="../herramientas/registrar.php">
+        ➕ Registrar Herramienta
     </a>
 
-    <a href="/certificados_herramientas/views/herramientas/listar.php">
-        📋 Herramientas
+    <a href="../herramientas/listar.php">
+        📋 Listado Herramientas
     </a>
 
-    <a href="/certificados_herramientas/logout.php">
-        🚪 Salir
+    <!-- ASIGNACIONES -->
+    <a href="../asignaciones/nueva.php">
+        🚧 Nueva Asignación
+    </a>
+
+    <a href="../asignaciones/listar.php">
+        📑 Historial Asignaciones
+    </a>
+
+    <!-- CENTROS DE COSTO -->
+    <a href="../centros_costos/registrar.php">
+        🏢 Registrar Centro de Costo
+    </a>
+
+    <a href="../centros_costos/listar.php">
+        🏬 Listado Centros de Costo
+    </a>
+
+    <!-- CERRAR SESIÓN -->
+    <a href="../../logout.php">
+        🚪 Cerrar Sesión
     </a>
 
 </div>

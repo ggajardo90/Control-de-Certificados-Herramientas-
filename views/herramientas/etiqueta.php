@@ -2,32 +2,24 @@
 session_start();
 require_once "../../config/database.php";
 
-/* =========================
-   PROTECCIÓN
-========================= */
+/* PROTECCIÓN */
 if (!isset($_SESSION["usuario_id"])) {
     header("Location: ../auth/login.php");
     exit;
 }
 
-/* =========================
-   VALIDAR ID
-========================= */
+/* VALIDAR ID */
 if (!isset($_GET["id"]) || empty($_GET["id"])) {
     die("ID no válido");
 }
 
-$id = $_GET["id"];
+$id = intval($_GET["id"]);
 
-/* =========================
-   CONEXIÓN
-========================= */
+/* CONEXIÓN */
 $db = new Database();
 $conn = $db->getConnection();
 
-/* =========================
-   CONSULTAR HERRAMIENTA
-========================= */
+/* CONSULTAR HERRAMIENTA */
 $sql = "SELECT * FROM herramientas WHERE id = :id LIMIT 1";
 $stmt = $conn->prepare($sql);
 $stmt->execute([
@@ -40,33 +32,23 @@ if (!$herramienta) {
     die("Herramienta no encontrada");
 }
 
-/* =========================
-   DATOS
-========================= */
-$nombre      = $herramienta["nombre_herramienta"];
-$serie       = $herramienta["numero_serie"];
-$inventario  = $herramienta["numero_inventario"];
-$pdf         = $herramienta["certificado_pdf"];
+/* DATOS */
+$nombre     = strtoupper($herramienta["nombre_herramienta"]);
+$serie      = strtoupper($herramienta["numero_serie"]);
+$inventario = $herramienta["numero_inventario"];
+$pdf        = $herramienta["certificado_pdf"];
 
-/* =====================================================
-   QR QUE FUNCIONE DESDE CELULAR
-
-   IMPORTANTE:
-   NO usar localhost porque desde celular NO funciona.
-
-   Debes cambiar:
-   192.168.1.50
-
-   por la IP real de tu PC en la red local
-   (cmd → ipconfig → IPv4)
-===================================================== */
-
+/*
+IMPORTANTE:
+Cambiar por IP real del servidor
+NO usar localhost
+*/
 $url_qr = "http://192.168.1.11/certificados_herramientas/uploads/pdf_certificados/" . $pdf;
 
 /* QR */
 $qr = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" . urlencode($url_qr);
 
-/* Código de barras */
+/* CÓDIGO DE BARRAS */
 $barcode = "https://barcode.tec-it.com/barcode.ashx?data=" . $inventario . "&code=Code128&dpi=96";
 ?>
 
@@ -75,45 +57,46 @@ $barcode = "https://barcode.tec-it.com/barcode.ashx?data=" . $inventario . "&cod
 
 <head>
     <meta charset="UTF-8">
-    <title>Etiqueta Zebra Doble</title>
+    <title>Etiqueta Zebra</title>
 
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
             background: white;
             font-family: Arial, sans-serif;
         }
 
-        /* =========================================
-           HOJA COMPLETA
-           103 mm x 50 mm
-           2 etiquetas
-           separación horizontal: 3 mm
-        ========================================= */
+        /*
+        HOJA COMPLETA:
+        103 mm ancho
+        30 mm alto
+        */
         .pagina {
             width: 103mm;
-            height: 50mm;
+            height: 30mm;
             display: flex;
-            align-items: flex-start;
-            justify-content: flex-start;
+            flex-direction: row;
             gap: 3mm;
             padding: 0;
             margin: 0;
-            box-sizing: border-box;
+            overflow: hidden;
         }
 
-        /* =========================================
-           CADA ETIQUETA
-           50 mm x 30 mm
-        ========================================= */
+        /*
+        CADA ETIQUETA:
+        50 x 30 mm
+        */
         .etiqueta {
             width: 50mm;
             height: 30mm;
             padding: 2mm;
-            box-sizing: border-box;
-            overflow: hidden;
             background: white;
+            overflow: hidden;
         }
 
         .nombre {
@@ -138,14 +121,19 @@ $barcode = "https://barcode.tec-it.com/barcode.ashx?data=" . $inventario . "&cod
         }
 
         .barcode-box {
-            width: 65%;
+            width: 68%;
             text-align: center;
         }
 
         .barcode-box img {
             width: 100%;
-            height: 9mm;
+            height: 13mm;
             object-fit: contain;
+        }
+
+        .barcode-grande {
+            transform: scale(1.08);
+            transform-origin: center;
         }
 
         .inventario {
@@ -155,7 +143,7 @@ $barcode = "https://barcode.tec-it.com/barcode.ashx?data=" . $inventario . "&cod
         }
 
         .qr-box {
-            width: 30%;
+            width: 28%;
             text-align: center;
         }
 
@@ -175,17 +163,10 @@ $barcode = "https://barcode.tec-it.com/barcode.ashx?data=" . $inventario . "&cod
             border: none;
             padding: 10px 24px;
             border-radius: 8px;
-            font-size: 14px;
             cursor: pointer;
+            font-size: 14px;
         }
 
-        .btn-print:hover {
-            background: black;
-        }
-
-        /* =========================================
-           IMPRESIÓN
-        ========================================= */
         @media print {
 
             .acciones {
@@ -198,7 +179,7 @@ $barcode = "https://barcode.tec-it.com/barcode.ashx?data=" . $inventario . "&cod
             }
 
             @page {
-                size: 103mm 50mm;
+                size: 103mm 30mm;
                 margin: 0;
             }
         }
@@ -209,67 +190,37 @@ $barcode = "https://barcode.tec-it.com/barcode.ashx?data=" . $inventario . "&cod
 
     <div class="pagina">
 
-        <!-- =====================================
-         ETIQUETA 1
-    ====================================== -->
-        <div class="etiqueta">
+        <?php for ($i = 1; $i <= 2; $i++): ?>
 
-            <div class="nombre">
-                <?php echo $nombre; ?>
-            </div>
+            <div class="etiqueta">
 
-            <div class="serie">
-                <?php echo $serie; ?>
-            </div>
+                <div class="nombre">
+                    <?= htmlspecialchars($nombre) ?>
+                </div>
 
-            <div class="contenido">
+                <div class="serie">
+                    <?= htmlspecialchars($serie) ?>
+                </div>
 
-                <div class="barcode-box">
-                    <img src="<?php echo $barcode; ?>" alt="Código de barras">
+                <div class="contenido">
 
-                    <div class="inventario">
-                        <?php echo $inventario; ?>
+                    <div class="barcode-box">
+                        <img src="<?= $barcode ?>" alt="Código de barras" class="barcode-grande">
+
+                        <div class="inventario">
+                            <?= htmlspecialchars($inventario) ?>
+                        </div>
                     </div>
-                </div>
 
-                <div class="qr-box">
-                    <img src="<?php echo $qr; ?>" alt="QR">
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- =====================================
-         ETIQUETA 2 (COPIA)
-    ====================================== -->
-        <div class="etiqueta">
-
-            <div class="nombre">
-                <?php echo $nombre; ?>
-            </div>
-
-            <div class="serie">
-                <?php echo $serie; ?>
-            </div>
-
-            <div class="contenido">
-
-                <div class="barcode-box">
-                    <img src="<?php echo $barcode; ?>" alt="Código de barras">
-
-                    <div class="inventario">
-                        <?php echo $inventario; ?>
+                    <div class="qr-box">
+                        <img src="<?= $qr ?>" alt="QR">
                     </div>
-                </div>
 
-                <div class="qr-box">
-                    <img src="<?php echo $qr; ?>" alt="QR">
                 </div>
 
             </div>
 
-        </div>
+        <?php endfor; ?>
 
     </div>
 

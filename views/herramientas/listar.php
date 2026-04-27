@@ -18,19 +18,62 @@ $conn = $db->getConnection();
 ========================= */
 $buscar = isset($_GET["buscar"]) ? trim($_GET["buscar"]) : "";
 
+/* =========================
+   CONSULTA CON CENTRO DE COSTO (CÓDIGO)
+========================= */
 if (!empty($buscar)) {
-    $sql = "SELECT * FROM herramientas 
-            WHERE nombre_herramienta LIKE :buscar
-            OR numero_serie LIKE :buscar
-            OR numero_inventario LIKE :buscar
-            ORDER BY id DESC";
+
+    $sql = "
+        SELECT 
+            h.*,
+            a.estado AS estado_asignacion,
+            cc.codigo AS codigo_centro_costo
+        FROM herramientas h
+
+        LEFT JOIN asignacion_detalle ad 
+            ON h.id = ad.herramienta_id
+
+        LEFT JOIN asignaciones a 
+            ON ad.asignacion_id = a.id
+            AND a.estado = 'Activa'
+
+        LEFT JOIN centros_costos cc
+            ON a.centro_costo = cc.nombre
+
+        WHERE
+            h.nombre_herramienta LIKE :buscar
+            OR h.numero_serie LIKE :buscar
+            OR h.numero_inventario LIKE :buscar
+
+        ORDER BY h.id DESC
+    ";
 
     $stmt = $conn->prepare($sql);
     $stmt->execute([
         ":buscar" => "%$buscar%"
     ]);
 } else {
-    $sql = "SELECT * FROM herramientas ORDER BY id DESC";
+
+    $sql = "
+        SELECT 
+            h.*,
+            a.estado AS estado_asignacion,
+            cc.codigo AS codigo_centro_costo
+        FROM herramientas h
+
+        LEFT JOIN asignacion_detalle ad 
+            ON h.id = ad.herramienta_id
+
+        LEFT JOIN asignaciones a 
+            ON ad.asignacion_id = a.id
+            AND a.estado = 'Activa'
+
+        LEFT JOIN centros_costos cc
+            ON a.centro_costo = cc.nombre
+
+        ORDER BY h.id DESC
+    ";
+
     $stmt = $conn->prepare($sql);
     $stmt->execute();
 }
@@ -104,7 +147,7 @@ include "../layouts/sidebar.php";
 
         <div class="table-responsive">
 
-            <table class="table align-middle">
+            <table class="table table-bordered align-middle text-center">
 
                 <thead>
                     <tr>
@@ -115,7 +158,9 @@ include "../layouts/sidebar.php";
                         <th>Modelo</th>
                         <th>Fecha Vencimiento</th>
                         <th>Días</th>
-                        <th>Estado</th>
+                        <th>Certificación</th>
+                        <th>Estado Operacional</th>
+                        <th>Centro de Costo</th>
                         <th>N° Certificado</th>
                         <th>PDF</th>
                         <th>Acciones</th>
@@ -138,77 +183,76 @@ include "../layouts/sidebar.php";
                             if ($dias < 0) {
                                 $texto_dias = abs($dias);
                                 $color_dias = "danger";
-                                $estado = "Vencida";
+                                $estado_cert = "Vencida";
                             } elseif ($dias <= 30) {
                                 $texto_dias = $dias;
                                 $color_dias = "warning";
-                                $estado = "Por Vencer";
+                                $estado_cert = "Por Vencer";
                             } else {
                                 $texto_dias = $dias;
                                 $color_dias = "success";
-                                $estado = "Vigente";
+                                $estado_cert = "Vigente";
+                            }
+
+                            /* Estado operacional */
+                            if ($fila["estado_operacional"] == "Asignada en terreno") {
+                                $estado_op_color = "danger";
+                                $estado_op = "Asignada";
+                            } else {
+                                $estado_op_color = "success";
+                                $estado_op = "Disponible";
                             }
                             ?>
 
                             <tr>
 
-                                <!-- INVENTARIO -->
+                                <td>
+                                    <strong><?= $fila["numero_inventario"]; ?></strong>
+                                </td>
+
+                                <td><?= $fila["nombre_herramienta"]; ?></td>
+
+                                <td><?= $fila["numero_serie"]; ?></td>
+
+                                <td><?= $fila["marca"]; ?></td>
+
+                                <td><?= $fila["modelo"]; ?></td>
+
+                                <td><?= $fila["fecha_vencimiento"]; ?></td>
+
+                                <td>
+                                    <span class="badge bg-<?= $color_dias; ?>">
+                                        <?= $texto_dias; ?>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-<?= $color_dias; ?>">
+                                        <?= $estado_cert; ?>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-<?= $estado_op_color; ?>">
+                                        <?= $estado_op; ?>
+                                    </span>
+                                </td>
+
                                 <td>
                                     <strong>
-                                        <?php echo $fila["numero_inventario"]; ?>
+                                        <?= !empty($fila["codigo_centro_costo"])
+                                            ? $fila["codigo_centro_costo"]
+                                            : "-" ?>
                                     </strong>
                                 </td>
 
-                                <!-- HERRAMIENTA -->
-                                <td>
-                                    <?php echo $fila["nombre_herramienta"]; ?>
-                                </td>
+                                <td><?= $fila["numero_certificado"]; ?></td>
 
-                                <!-- SERIE -->
-                                <td>
-                                    <?php echo $fila["numero_serie"]; ?>
-                                </td>
-
-                                <!-- MARCA -->
-                                <td>
-                                    <?php echo $fila["marca"]; ?>
-                                </td>
-
-                                <!-- MODELO -->
-                                <td>
-                                    <?php echo $fila["modelo"]; ?>
-                                </td>
-
-                                <!-- FECHA -->
-                                <td>
-                                    <?php echo $fila["fecha_vencimiento"]; ?>
-                                </td>
-
-                                <!-- DÍAS -->
-                                <td>
-                                    <span class="badge bg-<?php echo $color_dias; ?>">
-                                        <?php echo $texto_dias; ?>
-                                    </span>
-                                </td>
-
-                                <!-- ESTADO -->
-                                <td>
-                                    <span class="badge bg-<?php echo $color_dias; ?>">
-                                        <?php echo $estado; ?>
-                                    </span>
-                                </td>
-
-                                <!-- CERTIFICADO -->
-                                <td>
-                                    <?php echo $fila["numero_certificado"]; ?>
-                                </td>
-
-                                <!-- PDF CON ICONO -->
                                 <td>
                                     <?php if (!empty($fila["certificado_pdf"])): ?>
 
                                         <a
-                                            href="../../uploads/pdf_certificados/<?php echo $fila["certificado_pdf"]; ?>"
+                                            href="../../uploads/pdf_certificados/<?= $fila["certificado_pdf"]; ?>"
                                             target="_blank"
                                             class="btn btn-sm btn-info text-white"
                                             title="Ver Certificado PDF">
@@ -217,24 +261,22 @@ include "../layouts/sidebar.php";
 
                                     <?php else: ?>
 
-                                        <span class="text-muted">
-                                            —
-                                        </span>
+                                        <span class="text-muted">—</span>
 
                                     <?php endif; ?>
                                 </td>
 
-                                <!-- ACCIONES -->
                                 <td>
+
                                     <a
-                                        href="editar.php?id=<?php echo $fila["id"]; ?>"
+                                        href="editar.php?id=<?= $fila["id"]; ?>"
                                         class="btn btn-sm btn-warning"
                                         title="Editar">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
 
                                     <a
-                                        href="eliminar.php?id=<?php echo $fila["id"]; ?>"
+                                        href="eliminar.php?id=<?= $fila["id"]; ?>"
                                         class="btn btn-sm btn-danger"
                                         title="Eliminar"
                                         onclick="return confirm('¿Deseas eliminar este registro?')">
@@ -242,7 +284,7 @@ include "../layouts/sidebar.php";
                                     </a>
 
                                     <a
-                                        href="etiqueta.php?id=<?php echo $fila['id']; ?>"
+                                        href="etiqueta.php?id=<?= $fila['id']; ?>"
                                         target="_blank"
                                         class="btn btn-sm btn-dark"
                                         title="Imprimir Etiqueta">
@@ -258,7 +300,7 @@ include "../layouts/sidebar.php";
                     <?php else: ?>
 
                         <tr>
-                            <td colspan="11" class="text-center">
+                            <td colspan="13" class="text-center">
                                 No hay herramientas registradas
                             </td>
                         </tr>

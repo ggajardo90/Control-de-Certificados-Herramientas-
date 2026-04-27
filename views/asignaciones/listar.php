@@ -24,7 +24,7 @@ $filtro_responsable = isset($_GET["responsable"]) ? trim($_GET["responsable"]) :
 $sql = "
     SELECT 
         a.id,
-        a.centro_costo,
+        cc.codigo AS codigo_centro_costo,
         a.responsable,
         a.fecha_salida,
         a.fecha_retorno,
@@ -34,11 +34,18 @@ $sql = "
         h.numero_serie,
         h.marca,
         h.modelo
+
     FROM asignaciones a
+
     INNER JOIN asignacion_detalle ad 
         ON a.id = ad.asignacion_id
+
     INNER JOIN herramientas h 
         ON ad.herramienta_id = h.id
+
+    LEFT JOIN centros_costos cc
+        ON a.centro_costo = cc.nombre
+
     WHERE 1=1
 ";
 
@@ -46,7 +53,7 @@ $params = [];
 
 /* FILTRO CENTRO DE COSTO */
 if (!empty($filtro_centro)) {
-    $sql .= " AND a.centro_costo LIKE :centro_costo ";
+    $sql .= " AND cc.codigo LIKE :centro_costo ";
     $params[":centro_costo"] = "%$filtro_centro%";
 }
 
@@ -89,14 +96,14 @@ include "../layouts/sidebar.php";
                 <!-- FILTRO CENTRO DE COSTO -->
                 <div class="col-md-5">
                     <label class="form-label">
-                        Filtrar por Centro de Costo
+                        Filtrar por Código Centro de Costo
                     </label>
 
                     <input
                         type="text"
                         name="centro_costo"
                         class="form-control"
-                        placeholder="Ej: Proyecto Talca"
+                        placeholder="Ej: 10025"
                         value="<?php echo htmlspecialchars($filtro_centro); ?>">
                 </div>
 
@@ -138,7 +145,7 @@ include "../layouts/sidebar.php";
 
         <div class="table-responsive">
 
-            <table class="table align-middle">
+            <table class="table align-middle text-center">
 
                 <thead>
                     <tr>
@@ -184,13 +191,15 @@ include "../layouts/sidebar.php";
                             <tr>
 
                                 <td>
-                                    <strong>
-                                        #<?= $fila["id"] ?>
-                                    </strong>
+                                    <strong>#<?= $fila["id"] ?></strong>
                                 </td>
 
                                 <td>
-                                    <?= $fila["centro_costo"] ?>
+                                    <strong>
+                                        <?= !empty($fila["codigo_centro_costo"])
+                                            ? $fila["codigo_centro_costo"]
+                                            : "-" ?>
+                                    </strong>
                                 </td>
 
                                 <td>
@@ -235,14 +244,25 @@ include "../layouts/sidebar.php";
 
                                 <td>
 
-                                    <a
-                                        href="devolucion.php?id=<?= $fila["id"] ?>"
-                                        class="btn btn-sm btn-success"
-                                        onclick="return confirm('¿Confirmar devolución de herramienta?')">
+                                    <?php if ($fila["estado"] != "Devuelta"): ?>
 
-                                        <i class="bi bi-arrow-return-left"></i>
+                                        <a
+                                            href="devolucion.php?id=<?= $fila["id"] ?>"
+                                            class="btn btn-sm btn-success"
+                                            title="Devolver herramienta"
+                                            onclick="return confirm('¿Confirmar devolución de herramienta?')">
 
-                                    </a>
+                                            <i class="bi bi-arrow-return-left"></i>
+
+                                        </a>
+
+                                    <?php else: ?>
+
+                                        <span class="text-muted">
+                                            —
+                                        </span>
+
+                                    <?php endif; ?>
 
                                 </td>
 

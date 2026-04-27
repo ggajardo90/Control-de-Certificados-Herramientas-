@@ -20,10 +20,13 @@ $filtro_responsable = isset($_GET["responsable"]) ? trim($_GET["responsable"]) :
 
 /* =====================================
    CONSULTA BASE
+   SOLO ASIGNACIONES ACTIVAS
+   + TRAER CÓDIGO DEL CENTRO DE COSTO
 ===================================== */
 $sql = "
     SELECT 
         a.id,
+        a.centro_costo,
         cc.codigo AS codigo_centro_costo,
         a.responsable,
         a.fecha_salida,
@@ -34,7 +37,6 @@ $sql = "
         h.numero_serie,
         h.marca,
         h.modelo
-
     FROM asignaciones a
 
     INNER JOIN asignacion_detalle ad 
@@ -46,31 +48,44 @@ $sql = "
     LEFT JOIN centros_costos cc
         ON a.centro_costo = cc.nombre
 
-    WHERE 1=1
+    WHERE a.estado = 'Activa'
 ";
 
 $params = [];
 
-/* FILTRO CENTRO DE COSTO */
+/* =====================================
+   FILTRO CENTRO DE COSTO
+===================================== */
 if (!empty($filtro_centro)) {
-    $sql .= " AND cc.codigo LIKE :centro_costo ";
+    $sql .= " 
+        AND (
+            a.centro_costo LIKE :centro_costo
+            OR cc.codigo LIKE :centro_costo
+        )
+    ";
     $params[":centro_costo"] = "%$filtro_centro%";
 }
 
-/* FILTRO RESPONSABLE */
+/* =====================================
+   FILTRO RESPONSABLE
+===================================== */
 if (!empty($filtro_responsable)) {
     $sql .= " AND a.responsable LIKE :responsable ";
     $params[":responsable"] = "%$filtro_responsable%";
 }
 
-/* ORDEN */
+/* =====================================
+   ORDEN
+===================================== */
 $sql .= " ORDER BY a.id DESC ";
 
 $stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $asignaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* LAYOUT */
+/* =====================================
+   LAYOUT
+===================================== */
 include "../layouts/header.php";
 include "../layouts/sidebar.php";
 ?>
@@ -79,7 +94,7 @@ include "../layouts/sidebar.php";
 
     <!-- NAVBAR -->
     <div class="navbar-custom d-flex justify-content-between align-items-center">
-        <h5 class="m-0">📑 Historial de Asignaciones</h5>
+        <h5 class="m-0">📑 Herramientas Asignadas</h5>
 
         <a href="nueva.php" class="btn btn-primary">
             + Nueva Asignación
@@ -96,14 +111,14 @@ include "../layouts/sidebar.php";
                 <!-- FILTRO CENTRO DE COSTO -->
                 <div class="col-md-5">
                     <label class="form-label">
-                        Filtrar por Código Centro de Costo
+                        Filtrar por Centro de Costo
                     </label>
 
                     <input
                         type="text"
                         name="centro_costo"
                         class="form-control"
-                        placeholder="Ej: 10025"
+                        placeholder="Ej: CC-001"
                         value="<?php echo htmlspecialchars($filtro_centro); ?>">
                 </div>
 
@@ -145,7 +160,7 @@ include "../layouts/sidebar.php";
 
         <div class="table-responsive">
 
-            <table class="table align-middle text-center">
+            <table class="table table-bordered align-middle text-center">
 
                 <thead>
                     <tr>
@@ -157,10 +172,11 @@ include "../layouts/sidebar.php";
                         <th>N° Serie</th>
                         <th>Marca</th>
                         <th>Modelo</th>
-                        <th>Salida</th>
-                        <th>Retorno</th>
+                        <th>Fecha Salida</th>
+                        <th>Fecha Retorno</th>
+                        <th>Días Asignados</th>
                         <th>Estado</th>
-                        <th>Acciones</th>
+                        <th>Devolver</th>
                     </tr>
                 </thead>
 
@@ -179,91 +195,117 @@ include "../layouts/sidebar.php";
                             ) {
                                 $estado_visual = "Atrasada";
                                 $color = "danger";
-                            } elseif ($fila["estado"] == "Devuelta") {
-                                $estado_visual = "Devuelta";
-                                $color = "success";
                             } else {
                                 $estado_visual = "Activa";
                                 $color = "warning";
                             }
                             ?>
 
+                            <?php
+                            $hoy = date("Y-m-d");
+
+                            /* Estado visual */
+                            if (
+                                $fila["fecha_retorno"] < $hoy &&
+                                $fila["estado"] == "Activa"
+                            ) {
+                                $estado_visual = "Atrasada";
+                                $color = "danger";
+                            } else {
+                                $estado_visual = "Activa";
+                                $color = "warning";
+                            }
+
+                            /* Calcular días asignados */
+                            $fecha_salida = new DateTime($fila["fecha_salida"]);
+                            $fecha_retorno = new DateTime($fila["fecha_retorno"]);
+                            $dias_asignados = $fecha_salida->diff($fecha_retorno)->days;
+                            ?>
+
                             <tr>
 
+                                <!-- ID -->
                                 <td>
-                                    <strong>#<?= $fila["id"] ?></strong>
+                                    <strong>
+                                        #<?= $fila["id"] ?>
+                                    </strong>
                                 </td>
 
+                                <!-- CENTRO DE COSTO (SOLO CÓDIGO) -->
                                 <td>
                                     <strong>
                                         <?= !empty($fila["codigo_centro_costo"])
-                                            ? $fila["codigo_centro_costo"]
+                                            ? htmlspecialchars($fila["codigo_centro_costo"])
                                             : "-" ?>
                                     </strong>
                                 </td>
 
+                                <!-- RESPONSABLE -->
                                 <td>
-                                    <?= $fila["responsable"] ?>
+                                    <?= htmlspecialchars($fila["responsable"]) ?>
                                 </td>
 
+                                <!-- HERRAMIENTA -->
                                 <td>
-                                    <?= $fila["nombre_herramienta"] ?>
+                                    <?= htmlspecialchars($fila["nombre_herramienta"]) ?>
                                 </td>
 
+                                <!-- INVENTARIO -->
                                 <td>
                                     <strong>
-                                        <?= $fila["numero_inventario"] ?>
+                                        <?= htmlspecialchars($fila["numero_inventario"]) ?>
                                     </strong>
                                 </td>
 
+                                <!-- SERIE -->
                                 <td>
-                                    <?= $fila["numero_serie"] ?>
+                                    <?= htmlspecialchars($fila["numero_serie"]) ?>
                                 </td>
 
+                                <!-- MARCA -->
                                 <td>
-                                    <?= $fila["marca"] ?>
+                                    <?= htmlspecialchars($fila["marca"]) ?>
                                 </td>
 
+                                <!-- MODELO -->
                                 <td>
-                                    <?= $fila["modelo"] ?>
+                                    <?= htmlspecialchars($fila["modelo"]) ?>
                                 </td>
 
+                                <!-- FECHA SALIDA -->
                                 <td>
                                     <?= $fila["fecha_salida"] ?>
                                 </td>
 
+                                <!-- FECHA RETORNO -->
                                 <td>
                                     <?= $fila["fecha_retorno"] ?>
                                 </td>
 
+                                <td>
+                                    <span class="badge bg-info">
+                                        <?= $dias_asignados ?> días
+                                    </span>
+                                </td>
+
+                                <!-- ESTADO -->
                                 <td>
                                     <span class="badge bg-<?= $color ?>">
                                         <?= $estado_visual ?>
                                     </span>
                                 </td>
 
+                                <!-- DEVOLVER -->
                                 <td>
+                                    <a
+                                        href="devolucion.php?id=<?= $fila["id"] ?>"
+                                        class="btn btn-sm btn-success"
+                                        title="Devolver herramienta"
+                                        onclick="return confirm('¿Confirmar devolución de herramienta?')">
 
-                                    <?php if ($fila["estado"] != "Devuelta"): ?>
+                                        <i class="bi bi-arrow-return-left"></i>
 
-                                        <a
-                                            href="devolucion.php?id=<?= $fila["id"] ?>"
-                                            class="btn btn-sm btn-success"
-                                            title="Devolver herramienta"
-                                            onclick="return confirm('¿Confirmar devolución de herramienta?')">
-
-                                            <i class="bi bi-arrow-return-left"></i>
-
-                                        </a>
-
-                                    <?php else: ?>
-
-                                        <span class="text-muted">
-                                            —
-                                        </span>
-
-                                    <?php endif; ?>
-
+                                    </a>
                                 </td>
 
                             </tr>
@@ -274,7 +316,7 @@ include "../layouts/sidebar.php";
 
                         <tr>
                             <td colspan="12" class="text-center">
-                                No hay asignaciones registradas
+                                No hay herramientas asignadas actualmente
                             </td>
                         </tr>
 

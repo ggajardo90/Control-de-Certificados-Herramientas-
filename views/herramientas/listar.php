@@ -19,64 +19,53 @@ $conn = $db->getConnection();
 $buscar = isset($_GET["buscar"]) ? trim($_GET["buscar"]) : "";
 
 /* =========================
-   CONSULTA CON CENTRO DE COSTO (CÓDIGO)
+   CONSULTA SIN DUPLICADOS
+   SOLO UNA FILA POR HERRAMIENTA
+========================= */
+$sql = "
+    SELECT 
+        h.*,
+        MAX(a.estado) AS estado_asignacion,
+        MAX(cc.codigo) AS codigo_centro_costo
+    FROM herramientas h
+
+    LEFT JOIN asignacion_detalle ad 
+        ON h.id = ad.herramienta_id
+
+    LEFT JOIN asignaciones a 
+        ON ad.asignacion_id = a.id
+        AND a.estado = 'Activa'
+
+    LEFT JOIN centros_costos cc
+        ON a.centro_costo = cc.nombre
+";
+
+$params = [];
+
+/* =========================
+   SI HAY BÚSQUEDA
 ========================= */
 if (!empty($buscar)) {
-
-    $sql = "
-        SELECT 
-            h.*,
-            a.estado AS estado_asignacion,
-            cc.codigo AS codigo_centro_costo
-        FROM herramientas h
-
-        LEFT JOIN asignacion_detalle ad 
-            ON h.id = ad.herramienta_id
-
-        LEFT JOIN asignaciones a 
-            ON ad.asignacion_id = a.id
-            AND a.estado = 'Activa'
-
-        LEFT JOIN centros_costos cc
-            ON a.centro_costo = cc.nombre
-
+    $sql .= "
         WHERE
             h.nombre_herramienta LIKE :buscar
             OR h.numero_serie LIKE :buscar
             OR h.numero_inventario LIKE :buscar
-
-        ORDER BY h.id DESC
     ";
 
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([
-        ":buscar" => "%$buscar%"
-    ]);
-} else {
-
-    $sql = "
-        SELECT 
-            h.*,
-            a.estado AS estado_asignacion,
-            cc.codigo AS codigo_centro_costo
-        FROM herramientas h
-
-        LEFT JOIN asignacion_detalle ad 
-            ON h.id = ad.herramienta_id
-
-        LEFT JOIN asignaciones a 
-            ON ad.asignacion_id = a.id
-            AND a.estado = 'Activa'
-
-        LEFT JOIN centros_costos cc
-            ON a.centro_costo = cc.nombre
-
-        ORDER BY h.id DESC
-    ";
-
-    $stmt = $conn->prepare($sql);
-    $stmt->execute();
+    $params[":buscar"] = "%$buscar%";
 }
+
+/* =========================
+   GROUP BY + ORDEN
+========================= */
+$sql .= "
+    GROUP BY h.id
+    ORDER BY h.id DESC
+";
+
+$stmt = $conn->prepare($sql);
+$stmt->execute($params);
 
 $herramientas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -194,7 +183,9 @@ include "../layouts/sidebar.php";
                                 $estado_cert = "Vigente";
                             }
 
-                            /* Estado operacional */
+                            /* =========================
+                               ESTADO OPERACIONAL
+                            ========================= */
                             if ($fila["estado_operacional"] == "Asignada en terreno") {
                                 $estado_op_color = "danger";
                                 $estado_op = "Asignada";
@@ -206,38 +197,60 @@ include "../layouts/sidebar.php";
 
                             <tr>
 
+                                <!-- INVENTARIO -->
                                 <td>
-                                    <strong><?= $fila["numero_inventario"]; ?></strong>
+                                    <strong>
+                                        <?= $fila["numero_inventario"]; ?>
+                                    </strong>
                                 </td>
 
-                                <td><?= $fila["nombre_herramienta"]; ?></td>
+                                <!-- HERRAMIENTA -->
+                                <td>
+                                    <?= $fila["nombre_herramienta"]; ?>
+                                </td>
 
-                                <td><?= $fila["numero_serie"]; ?></td>
+                                <!-- SERIE -->
+                                <td>
+                                    <?= $fila["numero_serie"]; ?>
+                                </td>
 
-                                <td><?= $fila["marca"]; ?></td>
+                                <!-- MARCA -->
+                                <td>
+                                    <?= $fila["marca"]; ?>
+                                </td>
 
-                                <td><?= $fila["modelo"]; ?></td>
+                                <!-- MODELO -->
+                                <td>
+                                    <?= $fila["modelo"]; ?>
+                                </td>
 
-                                <td><?= $fila["fecha_vencimiento"]; ?></td>
+                                <!-- FECHA -->
+                                <td>
+                                    <?= $fila["fecha_vencimiento"]; ?>
+                                </td>
 
+                                <!-- DÍAS -->
                                 <td>
                                     <span class="badge bg-<?= $color_dias; ?>">
                                         <?= $texto_dias; ?>
                                     </span>
                                 </td>
 
+                                <!-- CERTIFICACIÓN -->
                                 <td>
                                     <span class="badge bg-<?= $color_dias; ?>">
                                         <?= $estado_cert; ?>
                                     </span>
                                 </td>
 
+                                <!-- ESTADO OPERACIONAL -->
                                 <td>
                                     <span class="badge bg-<?= $estado_op_color; ?>">
                                         <?= $estado_op; ?>
                                     </span>
                                 </td>
 
+                                <!-- CENTRO DE COSTO -->
                                 <td>
                                     <strong>
                                         <?= !empty($fila["codigo_centro_costo"])
@@ -246,8 +259,12 @@ include "../layouts/sidebar.php";
                                     </strong>
                                 </td>
 
-                                <td><?= $fila["numero_certificado"]; ?></td>
+                                <!-- CERTIFICADO -->
+                                <td>
+                                    <?= $fila["numero_certificado"]; ?>
+                                </td>
 
+                                <!-- PDF -->
                                 <td>
                                     <?php if (!empty($fila["certificado_pdf"])): ?>
 
@@ -266,6 +283,7 @@ include "../layouts/sidebar.php";
                                     <?php endif; ?>
                                 </td>
 
+                                <!-- ACCIONES -->
                                 <td>
 
                                     <a
